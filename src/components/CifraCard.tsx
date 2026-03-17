@@ -1,36 +1,43 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
+import Link from "next/link"
 
 interface Cifra {
-  id: string;
-  titulo: string;
-  artista?: string;
-  tom?: string;
+  id: number
+  titulo?: string
+  cifra: string
+  artista?: string
+  tom?: string
 }
 
 export default function CifraCard({ cifra }: { cifra: Cifra }) {
+
   return (
-    <Link href={`/musica/${cifra.id}`} className="block">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-primary/50 transition">
-        <h3 className="text-xl font-semibold text-text-light dark:text-text-dark mb-1">
-          {cifra.titulo}
+
+    <Link href={`/musica/${cifra.id}`}>
+
+      <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition cursor-pointer">
+
+        <h3 className="text-xl font-bold text-amber-900">
+          {cifra.titulo ?? "Sem título"}
         </h3>
 
-        <div className="flex flex-wrap gap-3 mt-2">
-          {cifra.artista && (
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {cifra.artista}
-            </span>
-          )}
+        {cifra.artista && (
+          <p className="text-gray-500 text-sm mt-1">
+            {cifra.artista}
+          </p>
+        )}
 
-          {cifra.tom && (
-            <span className="text-sm px-3 py-0.5 bg-accent/20 text-accent rounded-full font-medium">
-              Tom: {cifra.tom}
-            </span>
-          )}
-        </div>
+        {cifra.tom && (
+          <p className="text-sm mt-2 text-amber-700">
+            Tom: {cifra.tom}
+          </p>
+        )}
+
       </div>
+
     </Link>
-  );
+
+  )
+
 }
