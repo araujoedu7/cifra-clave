@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cifra Clave",
+  title: "Cifra Tuus",
   description: "App de cifras pro grupo",
   manifest: "/manifest.json",
 };
