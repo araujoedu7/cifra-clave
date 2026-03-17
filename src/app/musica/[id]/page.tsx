@@ -42,4 +42,4 @@ export default async function MusicaPage({
   }
 
   return <CifraView cifra={cifra} />
-}
+
