@@ -14,7 +14,6 @@ export default async function MusicaPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-
   const { id } = await params
   const numeroId = parseInt(id)
 
@@ -27,12 +26,20 @@ export default async function MusicaPage({
     WHERE id = ${numeroId}
   `
 
-  const cifra = resultado[0]
+  const cifraDb = resultado[0]
 
-  if (!cifra) {
+  if (!cifraDb) {
     return <div className="p-10">Cifra não encontrada</div>
   }
 
-  return <CifraView cifra={cifra} />
+  // Mapear explicitamente para o tipo Cifra
+  const cifra: Cifra = {
+    id: cifraDb.id,
+    cifra: cifraDb.cifra,
+    titulo: cifraDb.titulo ?? "",
+    artista: cifraDb.artista ?? "",
+    tom: cifraDb.tom ?? "",
+  }
 
+  return <CifraView cifra={cifra} />
 }
