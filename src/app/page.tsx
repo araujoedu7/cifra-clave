@@ -1,29 +1,29 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import localForage from 'localforage';
-import { Plus, Music, Trash2, Search, Star } from 'lucide-react';
-import CifraCard from 'src/components/CifraCard';
+import { useState, useEffect } from "react"
+import { Plus, Music, Search } from "lucide-react"
+import Link from "next/link"
+import CifraCard from "src/components/CifraCard"
 
 interface Cifra {
-  id: string;
-  titulo: string;
-  cifra: string;
-  artista?: string;
-  tom?: string;
-  favorita?: boolean;
+  id: number
+  titulo?: string
+  cifra: string
+  artista?: string
+  tom?: string
 }
 
 export default function Home() {
 
   const [cifras,setCifras] = useState<Cifra[]>([])
-  const [busca,setBusca] = useState('')
+  const [busca,setBusca] = useState("")
+  const [abrirModal,setAbrirModal] = useState(false)
 
   const [nova,setNova] = useState({
-    titulo:'',
-    cifra:'',
-    artista:'',
-    tom:''
+    titulo:"",
+    cifra:"",
+    artista:"",
+    tom:""
   })
 
   useEffect(()=>{
@@ -31,211 +31,222 @@ export default function Home() {
   },[])
 
   async function carregar(){
-    const salvas = await localForage.getItem<Cifra[]>('cifras')
-    if(salvas) setCifras(salvas)
-  }
 
-  async function salvarStorage(lista:Cifra[]){
-    await localForage.setItem('cifras',lista)
+    try{
+
+      const res = await fetch("/api/cifras")
+      const dados = await res.json()
+
+      setCifras(dados)
+
+    }catch(err){
+
+      console.error("Erro ao carregar",err)
+
+    }
+
   }
 
   async function adicionar(){
 
     if(!nova.titulo.trim() || !nova.cifra.trim()) return
 
-    const novaCifra:Cifra={
-      id:Date.now().toString(),
-      titulo:nova.titulo.trim(),
-      cifra:nova.cifra.trim(),
-      artista:nova.artista.trim() || undefined,
-      tom:nova.tom.trim() || undefined,
-      favorita:false
+    try{
+
+      const res = await fetch("/api/cifras",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(nova)
+      })
+
+      const criada = await res.json()
+
+      setCifras([criada,...cifras])
+
+      setNova({
+        titulo:"",
+        cifra:"",
+        artista:"",
+        tom:""
+      })
+
+      setAbrirModal(false)
+
+    }catch(err){
+
+      console.error("Erro ao salvar",err)
+
     }
 
-    const novas=[novaCifra,...cifras]
-
-    setCifras(novas)
-    salvarStorage(novas)
-
-    setNova({
-      titulo:'',
-      cifra:'',
-      artista:'',
-      tom:''
-    })
-
   }
 
-  async function remover(id:string){
-
-    const novas=cifras.filter(c=>c.id!==id)
-
-    setCifras(novas)
-    salvarStorage(novas)
-
-  }
-
-  async function favoritar(id:string){
-
-    const novas=cifras.map(c=>{
-      if(c.id===id){
-        return {...c,favorita:!c.favorita}
-      }
-      return c
-    })
-
-    setCifras(novas)
-    salvarStorage(novas)
-
-  }
-
-  const filtradas=cifras
-  .filter(c=>c.titulo.toLowerCase().includes(busca.toLowerCase()))
-  .sort((a,b)=>Number(b.favorita)-Number(a.favorita))
+  const filtradas = cifras.filter(c =>
+    (c.titulo ?? "").toLowerCase().includes(busca.toLowerCase())
+  )
 
   return(
 
-  <div className="min-h-screen bg-neutral-light dark:bg-neutral-dark text-text-light dark:text-text-dark pt-28 pb-16 px-4 sm:px-6">
+  <div className="min-h-screen bg-blue-50">
 
-  <div className="max-w-3xl mx-auto space-y-10">
+    {/* HEADER */}
 
-  {/* Cabeçalho */}
+    <header className="bg-white shadow-sm border-b border-blue-100">
 
-  <div className="text-center">
+      <div className="max-w-5xl mx-auto px-6 py-6 flex justify-between items-center">
 
-  <h1 className="text-4xl sm:text-5xl font-extrabold text-primary">
-  Cifra Clave
-  </h1>
+        <div>
 
-  <p className="text-gray-500 mt-2">
-  Repertório do ministério
-  </p>
+          <h1 className="text-3xl font-bold text-blue-900">
+            Cifra Clave
+          </h1>
 
-  </div>
+          <p className="text-sm text-gray-500">
+            Repertório do ministério
+          </p>
 
-  {/* Formulário */}
+        </div>
 
-  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-6 border border-gray-200 dark:border-gray-700 space-y-4">
+        <div className="flex gap-3">
 
-  <input
-  placeholder="Título da música"
-  value={nova.titulo}
-  onChange={(e)=>setNova({...nova,titulo:e.target.value})}
-  className="w-full p-4 border rounded-xl"
-/>
+          <Link
+            href="/setlist"
+            className="bg-yellow-300 hover:bg-yellow-400 text-blue-900 px-4 py-2 rounded-lg font-semibold"
+          >
+            Setlist
+          </Link>
 
-  <input
-  placeholder="Artista"
-  value={nova.artista}
-  onChange={(e)=>setNova({...nova,artista:e.target.value})}
-  className="w-full p-4 border rounded-xl"
-/>
+          <button
+            onClick={()=>setAbrirModal(true)}
+            className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+          >
 
-  <input
-  placeholder="Tom (ex: G, D, A)"
-  value={nova.tom}
-  onChange={(e)=>setNova({...nova,tom:e.target.value})}
-  className="w-full p-4 border rounded-xl"
-/>
+            <Plus size={18}/>
+            Nova música
 
-  <textarea
-  placeholder="Cole a cifra completa aqui..."
-  value={nova.cifra}
-  onChange={(e)=>setNova({...nova,cifra:e.target.value})}
-  className="w-full h-48 p-4 border rounded-xl font-mono"
-/>
+          </button>
 
-  <button
-  onClick={adicionar}
-  className="w-full bg-blue-600 text-white py-4 rounded-xl flex items-center justify-center gap-2 font-semibold hover:bg-primary-dark transition"
-  >
+        </div>
 
-  <Plus className="h-5 w-5"/>
+      </div>
 
-  Salvar Louvor
+    </header>
 
-  </button>
 
-  </div>
+    {/* CONTEÚDO */}
 
-  {/* Busca */}
+    <main className="max-w-5xl mx-auto px-6 py-10">
 
-  <div className="relative">
+      {/* busca */}
 
-  <Search className="absolute left-4 top-4 text-gray-400 h-5 w-5"/>
+      <div className="relative mb-8">
 
-  <input
-  placeholder="Buscar música..."
-  value={busca}
-  onChange={(e)=>setBusca(e.target.value)}
-  className="w-full pl-12 p-4 border rounded-xl"
-/>
+        <Search className="absolute left-4 top-4 text-gray-400"/>
 
-  </div>
+        <input
+          placeholder="Buscar música..."
+          value={busca}
+          onChange={(e)=>setBusca(e.target.value)}
+          className="w-full pl-12 p-4 border rounded-xl bg-white"
+        />
 
-  {/* Lista */}
+      </div>
 
-  <section>
 
-  <h2 className="text-2xl font-semibold text-primary mb-4">
-  Repertório ({filtradas.length})
-  </h2>
+      {/* lista */}
 
-  {filtradas.length===0 ?(
+      {filtradas.length === 0 ?(
 
-  <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-20 text-gray-500">
 
-  <Music className="mx-auto mb-3"/>
+          <Music size={40} className="mx-auto mb-4"/>
 
-  Nenhuma música encontrada
+          Nenhuma música cadastrada
 
-  </div>
+        </div>
 
-  ):(
+      ):(
 
-  <div className="space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
 
-  {filtradas.map(c=>(
+          {filtradas.map(c=>(
+            <CifraCard key={c.id} cifra={c}/>
+          ))}
 
-  <div key={c.id} className="relative">
+        </div>
 
-  <CifraCard cifra={c}/>
+      )}
 
-  {/* favorito */}
+    </main>
 
-  <button
-  onClick={()=>favoritar(c.id)}
-  className={`absolute top-4 left-4 ${c.favorita ? 'text-yellow-400' : 'text-gray-400'}`}
-  >
 
-  <Star className="h-5 w-5"/>
+    {/* MODAL */}
 
-  </button>
+    {abrirModal &&(
 
-  {/* remover */}
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-6">
 
-  <button
-  onClick={()=>remover(c.id)}
-  className="absolute top-4 right-4 text-red-500"
-  >
+        <div className="bg-white w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-xl">
 
-  <Trash2 className="h-4 w-4"/>
+          <h2 className="text-xl font-bold text-blue-900">
+            Nova música
+          </h2>
 
-  </button>
+          <input
+            placeholder="Título"
+            value={nova.titulo}
+            onChange={(e)=>setNova({...nova,titulo:e.target.value})}
+            className="w-full p-3 border rounded-lg"
+          />
 
-  </div>
+          <input
+            placeholder="Artista"
+            value={nova.artista}
+            onChange={(e)=>setNova({...nova,artista:e.target.value})}
+            className="w-full p-3 border rounded-lg"
+          />
 
-  ))}
+          <input
+            placeholder="Tom"
+            value={nova.tom}
+            onChange={(e)=>setNova({...nova,tom:e.target.value})}
+            className="w-full p-3 border rounded-lg"
+          />
 
-  </div>
+          <textarea
+            placeholder="Cole a cifra aqui..."
+            value={nova.cifra}
+            onChange={(e)=>setNova({...nova,cifra:e.target.value})}
+            className="w-full h-40 p-3 border rounded-lg font-mono"
+          />
 
-  )}
+          <div className="flex justify-end gap-3 pt-2">
 
-  </section>
+            <button
+              onClick={()=>setAbrirModal(false)}
+              className="px-4 py-2 rounded-lg border"
+            >
+              cancelar
+            </button>
 
-  </div>
+            <button
+              onClick={adicionar}
+              className="bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              salvar
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    )}
 
   </div>
 
   )
+
 }
